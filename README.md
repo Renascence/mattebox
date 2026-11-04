@@ -64,7 +64,7 @@ npm run test:exif
 
 ## 体积
 
-`npm run build` 产出 **单文件 387 kB / gzip 180 kB / brotli 168 kB**。构成（gzip 后）：
+`npm run build` 产出 **单文件约 387 KiB / gzip 约 182 KiB / brotli 约 168 KiB**（`vite build` 打印的 `396.54 kB` 是十进制单位，指同一个文件）。构成（1024 进制）：
 
 | 项 | raw | gzip | 说明 |
 |---|---|---|---|
@@ -78,6 +78,7 @@ npm run test:exif
 - **base64 比原始字节大 33%**，但 gzip 能压回来（base64 的可压缩性更高），所以单文件方案在传输上几乎不吃亏；代价是 HTML 无法和图片分开缓存。
 - 示例图从 JPEG 换 WebP 后 273 kB → 100 kB，同尺寸同观感。`sips` 不支持 WebP 输出，用 `sharp` 转的（一次性工具，没有进项目依赖）。
 - 本地 `npm run build` 能过 ≠ CI 能过：本地有 `node_modules` 顶着，CI 走 `npm ci`，对 lock 完整性是硬校验。
+- 剩下最大的一块是 **React 运行时（220 KiB，占 gzip 的 38%）**。业务代码只有 29 KiB，也就是说框架占了代码体积的 88%。若换成 `preact/compat`（alias `react` → `preact/compat`），这块大约能压到 10 KiB 级别，产物 gzip 有望从 182 KiB 降到 120 KiB 上下——代价是换运行时，需要回归一遍交互。
 
 ## 部署（GitHub Pages）
 
