@@ -1,0 +1,26 @@
+{
+  "name": "mattebox",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "给照片加装裱边框：卡纸留白 / 拍立得 / 出血满幅 / 模糊氛围底",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "check": "node --experimental-strip-types check-geom.mjs",
+    "test:exif": "node --experimental-strip-types scripts/test-exif.mjs"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.5",
+    "vite-plugin-singlefile": "^2.3.4"
+  }
+}
