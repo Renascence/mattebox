@@ -62,9 +62,26 @@ npm run test:exif
 - **持久化**：参数模板和水印 Logo 存 localStorage（Logo 上传时先按长边 1024 缩图再存，超过 1.5MB 就放弃缓存并提示），照片本身不存。
 - **批量下载**：浏览器对连续触发的下载有节流，所以每张之间隔 280ms，避免后半截被静默丢弃；进度直接显示在导出按钮上。
 
+## 部署（GitHub Pages）
+
+产物是**单文件** `dist/index.html`（JS / CSS / 示例图全部内联，0 处 `assets/` 外链），所以扔到任何静态托管的任何子路径都能跑，不需要为项目站点配 `base`。
+
+仓库里已带 `.github/workflows/deploy.yml`，push 到 `main` 就自动构建发布。首次启用只需一次手动操作：
+
+1. 打开仓库 **Settings → Pages**
+2. **Build and deployment → Source** 选 **GitHub Actions**（不要选 "Deploy from a branch"）
+3. 到 **Actions** 页签手动跑一次 `Deploy to GitHub Pages`，或直接 push 一个提交触发
+
+站点地址：`https://<user>.github.io/<repo>/`，本项目即 `https://renascence.github.io/-matte/`。
+
+> 仓库名 `-matte` 带前导连字符，URL 合法但不常见；想换成 `mattebox` 之类可以在 Settings → Repository name 改名，GitHub 会保留旧地址的重定向，Pages 地址也会跟着变。
+
+不用 Actions 的手动方案：`npm run build` 后把 `dist/` 推到 `gh-pages` 分支，Pages 的 Source 选该分支的 `/ (root)`。
+
 ## 目录
 
 ```
+.github/workflows/deploy.yml  push main 自动构建并发布到 Pages
 check-geom.mjs    布局 + 绘制冒烟自检（npm run check）
 scripts/
   test-exif.mjs   现场拼一张带 EXIF 的 JPEG 验证解析
