@@ -16,6 +16,12 @@ npm run test:exif
 
 快捷键：`⌘S` 导出（多张时导出全部），`⌘O` 打开文件，`⌘V` 粘贴图片。
 
+## 全屏预览
+
+点一下预览里的照片就进全屏，按可用空间贴合放大；多张时左右方向键或两侧箭头切换，`Esc` 或点任意处退出。
+全屏用的是同一套 `renderFrame`，所以看到的就是导出后的样子（含卡纸暗边、水印、题注）。
+背板按 `devicePixelRatio` 绘制，并限制在 4096 物理像素以内，避免在 5K 屏上开一张上万像素的 canvas。
+
 ## 批量
 
 - 一次拖入 / 选择多张，或在已有照片上继续追加；底部胶片条可以切换、单张移除。
@@ -115,6 +121,7 @@ src/
   App.tsx         状态、批量载入、粘贴、导出
   components/
     Stage.tsx     预览画布 / 拖拽区 / 空状态
+    Lightbox.tsx  全屏预览（Esc 退出、左右切图）
     Filmstrip.tsx 底部胶片条（带样式的缩略图）
     Panel.tsx     右侧参数面板
     ui.tsx        Slider / Chips / Swatches / Toggle / Thumb / PosGrid

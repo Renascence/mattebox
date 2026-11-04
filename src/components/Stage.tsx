@@ -8,9 +8,10 @@ interface Props {
   onFiles: (files: File[]) => void;
   onPick: () => void;
   onDemo: () => void;
+  onPreview: () => void;
 }
 
-export default function Stage({ item, logo, onFiles, onPick, onDemo }: Props) {
+export default function Stage({ item, logo, onFiles, onPick, onDemo, onPreview }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [box, setBox] = useState({ w: 0, h: 0 });
@@ -77,7 +78,22 @@ export default function Stage({ item, logo, onFiles, onPick, onDemo }: Props) {
       {item ? (
         <>
           <div className="canvas-wrap">
-            <canvas ref={canvasRef} />
+            <div
+              className="canvas-hit"
+              role="button"
+              tabIndex={0}
+              title="点击全屏预览"
+              onClick={onPreview}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onPreview();
+                }
+              }}
+            >
+              <canvas ref={canvasRef} />
+              <span className="canvas-hint">全屏预览</span>
+            </div>
           </div>
           {drag && <div className="drop-veil">松手添加照片</div>}
         </>

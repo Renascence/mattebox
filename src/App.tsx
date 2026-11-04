@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Stage from './components/Stage';
 import Filmstrip from './components/Filmstrip';
 import Panel from './components/Panel';
+import Lightbox from './components/Lightbox';
 import { DEFAULT_SETTINGS, PRESETS, STYLES, type Settings, type StyleId } from './types';
 import {
   canvasToBlob,
@@ -95,6 +96,7 @@ export default function App() {
   const [logo, setLogo] = useState<{ el: HTMLImageElement; url: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [previewing, setPreviewing] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
   const toastTimer = useRef<number | undefined>(undefined);
@@ -110,6 +112,29 @@ export default function App() {
     [items, activeId]
   );
   const settings = active?.settings ?? template;
+
+  const activeIndex = useMemo(
+    () => items.findIndex((i) => i.id === activeId),
+    [items, activeId]
+  );
+
+  /** 全屏预览里左右切图，到头绕回另一端 */
+  const stepPhoto = useCallback(
+    (delta: number) => {
+      if (items.length < 2) return;
+      const from = activeIndex < 0 ? 0 : activeIndex;
+      setActiveId(items[(from + delta + items.length) % items.length].id);
+    },
+    [activeIndex, items]
+  );
+
+  // 预览中的照片被删掉就自动退出
+  useEffect(() => {
+    if (previewing && !active) setPreviewing(false);
+  }, [active, previewing]);
+
+  const openPreview = useCallback(() => setPreviewing(true), []);
+  const closePreview = useCallback(() => setPreviewing(false), []);
 
   useEffect(() => {
     const t = window.setTimeout(() => {
@@ -439,6 +464,7 @@ export default function App() {
             onFiles={addFiles}
             onPick={pick}
             onDemo={useDemo}
+            onPreview={openPreview}
           />
           <Filmstrip
             items={items}
@@ -491,6 +517,18 @@ export default function App() {
           e.target.value = '';
         }}
       />
+
+      {previewing && active && (
+        <Lightbox
+          item={active}
+          logo={logo?.el ?? null}
+          index={Math.max(0, activeIndex)}
+          total={items.length}
+          onClose={closePreview}
+          onPrev={() => stepPhoto(-1)}
+          onNext={() => stepPhoto(1)}
+        />
+      )}
 
       {toast && <div className="toast">{toast}</div>}
     </div>
