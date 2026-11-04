@@ -70,25 +70,36 @@ npm run test:exif
 
 ## 体积
 
-`npm run build` 产出 **单文件约 387 KiB / gzip 约 182 KiB / brotli 约 168 KiB**（`vite build` 打印的 `396.54 kB` 是十进制单位，指同一个文件）。构成（1024 进制）：
+`npm run build` 产出**两个文件**，示例大图不进打包：
+
+| 文件 | raw | gzip | 什么时候下载 |
+|---|---|---|---|
+| `dist/index.html` | 268 KiB | **88 KiB** | 首屏。JS / CSS / 空状态缩略图全部内联 |
+| `dist/media/sample.webp` | 98 KiB | —（已是压缩格式） | **只有点了「用示例照片」才请求** |
+
+所以首屏只要 88 KiB gzip；真去用示例图时才是 88 + 98 = 186 KiB。
+
+`index.html` 内部构成：
 
 | 项 | raw | gzip | 说明 |
 |---|---|---|---|
-| 示例照片（base64） | 131 kB | ~73 kB | WebP q70 @1600px，100,624 字节 → base64 后 ×1.33 |
-| React 运行时 | 220 kB | 69 kB | 实测：只 import `react` + `react-dom/client` 的空壳构建就是 219.6 kB |
-| 业务代码 | 29 kB | 8 kB | render / exif / storage / 组件全算上 |
-| CSS | 12 kB | 3 kB | 无 web font，全靠系统字体 |
+| React 运行时 | 220 KiB | 69 KiB | 实测：只 import `react` + `react-dom/client` 的空壳构建就是 219.6 KiB |
+| 业务代码 | 29 KiB | 8 KiB | render / exif / storage / 组件全算上 |
+| 空状态缩略图（base64） | 5.8 KiB | 5.8 KiB | 240×160 WebP，源文件 4.3 KiB |
+| CSS | 12 KiB | 3 KiB | 无 web font，全靠系统字体 |
 
 几条实测结论：
 
-- **base64 比原始字节大 33%**，但 gzip 能压回来（base64 的可压缩性更高），所以单文件方案在传输上几乎不吃亏；代价是 HTML 无法和图片分开缓存。
-- 示例图从 JPEG 换 WebP 后 273 kB → 100 kB，同尺寸同观感。`sips` 不支持 WebP 输出，用 `sharp` 转的（一次性工具，没有进项目依赖）。
+- **示例图是懒加载的**：它放在 `public/media/` 下，Vite 不碰它，所以永远不会被 base64 塞进 HTML。`new Image()` 赋 `src` 之前浏览器不会发请求——首屏网络面板里只有 `index.html` 一条。
+- 空状态那个 66×44 的小缩略图**故意内联**：4.3 KiB 的图，走网络反而更慢，内联后空状态零请求。
+- 示例图从 JPEG 换 WebP 后 273 KiB → 98 KiB，同尺寸同观感。`sips` 不支持 WebP 输出，用 `sharp` 转的（一次性工具，没有进项目依赖）。
 - 本地 `npm run build` 能过 ≠ CI 能过：本地有 `node_modules` 顶着，CI 走 `npm ci`，对 lock 完整性是硬校验。
-- 剩下最大的一块是 **React 运行时（220 KiB，占 gzip 的 38%）**。业务代码只有 29 KiB，也就是说框架占了代码体积的 88%。若换成 `preact/compat`（alias `react` → `preact/compat`），这块大约能压到 10 KiB 级别，产物 gzip 有望从 182 KiB 降到 120 KiB 上下——代价是换运行时，需要回归一遍交互。
+- 剩下最大的一块是 **React 运行时（220 KiB，占 gzip 的 79%）**。业务代码只有 29 KiB，框架占了代码体积的 88%。换 `preact/compat` 大约能压到 10 KiB 级别，首屏 gzip 有望从 88 KiB 降到 25 KiB 上下——代价是换运行时，需要回归一遍交互。
+- **坑**：如果哪天要再把大图放进 `src/assets/` 走打包，`base: './'` 下 Vite 会生成 `new URL('xxx.webp', import.meta.url)`，而 JS 被内联进 HTML 后 `import.meta.url` 变成了 HTML 的地址，路径会解析错（实测 404）。要么继续放 `public/`，要么改用绝对 `base`。
 
 ## 部署（GitHub Pages）
 
-产物是**单文件** `dist/index.html`（JS / CSS / 示例图全部内联，0 处 `assets/` 外链），所以扔到任何静态托管的任何子路径都能跑，不需要为项目站点配 `base`。
+产物是 `dist/index.html` + `dist/media/sample.webp` 两个文件，全部相对路径（`base: './'`），所以扔到任何静态托管的任何子路径都能跑，不需要为项目站点额外配 base。本地双击 `index.html` 也能用。
 
 仓库里已带 `.github/workflows/deploy.yml`，push 到 `main` 就自动构建发布。首次启用只需一次手动操作：
 
@@ -110,15 +121,18 @@ check-geom.mjs    布局 + 绘制冒烟自检（npm run check）
 scripts/
   test-exif.mjs   现场拼一张带 EXIF 的 JPEG 验证解析
   render-preview.mjs  离屏渲染出 PNG 做肉眼验收（需 npm i @napi-rs/canvas --no-save）
+public/
+  media/
+    sample.webp  示例大图 1600×1066（98 KiB，不进打包，点「用示例照片」才请求）
 src/
   render.ts       布局计算 + canvas 渲染 + 导出
   exif.ts         JPEG / EXIF 解析与格式化
   storage.ts      水印 Logo 的缩图与 localStorage 缓存
   types.ts        设置项、预设、样式元数据
-  demo.ts         载入内置示例照片
-  assets/
-    sample.webp   示例照片（1600×1066，构建时内联成 base64）
+  demo.ts         按需载入示例照片
   App.tsx         状态、批量载入、粘贴、导出
+  assets/
+    sample-thumb.webp  空状态用的 240×160 缩略图（4.3 KiB，内联进 HTML）
   components/
     Stage.tsx     预览画布 / 拖拽区 / 空状态
     Lightbox.tsx  全屏预览（Esc 退出、左右切图）

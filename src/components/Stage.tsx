@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { computeLayout, renderFrame, type PhotoItem } from '../render';
-import sampleUrl from '../assets/sample.webp';
+import sampleThumb from '../assets/sample-thumb.webp';
 
 interface Props {
   item: PhotoItem | null;
   logo: HTMLImageElement | null;
   onFiles: (files: File[]) => void;
   onPick: () => void;
-  onDemo: () => void;
+  onDemo: () => void | Promise<void>;
   onPreview: () => void;
 }
 
@@ -16,6 +16,7 @@ export default function Stage({ item, logo, onFiles, onPick, onDemo, onPreview }
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [box, setBox] = useState({ w: 0, h: 0 });
   const [drag, setDrag] = useState(false);
+  const [demoBusy, setDemoBusy] = useState(false);
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -100,7 +101,7 @@ export default function Stage({ item, logo, onFiles, onPick, onDemo, onPreview }
       ) : (
         <div className="empty">
           <div className="empty-art">
-            <img src={sampleUrl} alt="" />
+            <img src={sampleThumb} alt="" width={66} height={44} decoding="async" />
           </div>
           <h2>把照片拖进来</h2>
           <p>支持一次拖入多张，也可以点击选择文件或 ⌘V 粘贴</p>
@@ -108,8 +109,19 @@ export default function Stage({ item, logo, onFiles, onPick, onDemo, onPreview }
             <button className="btn primary" onClick={onPick}>
               选择照片
             </button>
-            <button className="btn ghost" onClick={onDemo}>
-              用示例照片
+            <button
+              className="btn ghost"
+              disabled={demoBusy}
+              onClick={async () => {
+                setDemoBusy(true);
+                try {
+                  await onDemo();
+                } finally {
+                  setDemoBusy(false);
+                }
+              }}
+            >
+              {demoBusy ? '正在载入…' : '用示例照片'}
             </button>
           </div>
           <p className="empty-hint">照片只在本机浏览器里处理，不会上传</p>
