@@ -62,6 +62,23 @@ npm run test:exif
 - **持久化**：参数模板和水印 Logo 存 localStorage（Logo 上传时先按长边 1024 缩图再存，超过 1.5MB 就放弃缓存并提示），照片本身不存。
 - **批量下载**：浏览器对连续触发的下载有节流，所以每张之间隔 280ms，避免后半截被静默丢弃；进度直接显示在导出按钮上。
 
+## 体积
+
+`npm run build` 产出 **单文件 387 kB / gzip 180 kB / brotli 168 kB**。构成（gzip 后）：
+
+| 项 | raw | gzip | 说明 |
+|---|---|---|---|
+| 示例照片（base64） | 131 kB | ~73 kB | WebP q70 @1600px，100,624 字节 → base64 后 ×1.33 |
+| React 运行时 | 220 kB | 69 kB | 实测：只 import `react` + `react-dom/client` 的空壳构建就是 219.6 kB |
+| 业务代码 | 29 kB | 8 kB | render / exif / storage / 组件全算上 |
+| CSS | 12 kB | 3 kB | 无 web font，全靠系统字体 |
+
+几条实测结论：
+
+- **base64 比原始字节大 33%**，但 gzip 能压回来（base64 的可压缩性更高），所以单文件方案在传输上几乎不吃亏；代价是 HTML 无法和图片分开缓存。
+- 示例图从 JPEG 换 WebP 后 273 kB → 100 kB，同尺寸同观感。`sips` 不支持 WebP 输出，用 `sharp` 转的（一次性工具，没有进项目依赖）。
+- 本地 `npm run build` 能过 ≠ CI 能过：本地有 `node_modules` 顶着，CI 走 `npm ci`，对 lock 完整性是硬校验。
+
 ## 部署（GitHub Pages）
 
 产物是**单文件** `dist/index.html`（JS / CSS / 示例图全部内联，0 处 `assets/` 外链），所以扔到任何静态托管的任何子路径都能跑，不需要为项目站点配 `base`。
@@ -93,7 +110,7 @@ src/
   types.ts        设置项、预设、样式元数据
   demo.ts         载入内置示例照片
   assets/
-    sample.jpg    示例照片（1600×1066，构建时内联成 base64）
+    sample.webp   示例照片（1600×1066，构建时内联成 base64）
   App.tsx         状态、批量载入、粘贴、导出
   components/
     Stage.tsx     预览画布 / 拖拽区 / 空状态

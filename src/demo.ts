@@ -1,4 +1,4 @@
-import sampleUrl from './assets/sample.jpg';
+import sampleUrl from './assets/sample.webp';
 import type { Photo } from './render';
 
 /** 示例照片附带的参数文字（示例图本身没有 EXIF，写一行示意） */

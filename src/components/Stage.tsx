@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { computeLayout, renderFrame, type PhotoItem } from '../render';
-import sampleUrl from '../assets/sample.jpg';
+import sampleUrl from '../assets/sample.webp';
 
 interface Props {
   item: PhotoItem | null;
