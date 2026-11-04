@@ -72,9 +72,9 @@ npm run test:exif
 2. **Build and deployment → Source** 选 **GitHub Actions**（不要选 "Deploy from a branch"）
 3. 到 **Actions** 页签手动跑一次 `Deploy to GitHub Pages`，或直接 push 一个提交触发
 
-站点地址：`https://<user>.github.io/<repo>/`，本项目即 `https://renascence.github.io/-matte/`。
+站点地址：`https://renascence.github.io/mattebox/`
 
-> 仓库名 `-matte` 带前导连字符，URL 合法但不常见；想换成 `mattebox` 之类可以在 Settings → Repository name 改名，GitHub 会保留旧地址的重定向，Pages 地址也会跟着变。
+> 依赖锁文件必须是完整的：`npm ci` 会严格比对 `package.json` 与 `package-lock.json`，只要 lock 的 `packages[""]` 里缺了 devDependencies（例如当初用 `--omit=dev` 生成），CI 会在 Install 步骤直接失败。改过依赖后跑一次 `npm install --package-lock-only` 把 lock 补齐，本地用 `npm ci --dry-run` 能验证。
 
 不用 Actions 的手动方案：`npm run build` 后把 `dist/` 推到 `gh-pages` 分支，Pages 的 Source 选该分支的 `/ (root)`。
 
